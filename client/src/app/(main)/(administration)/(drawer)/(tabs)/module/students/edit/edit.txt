@@ -1,0 +1,270 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  StyleSheet, 
+  TouchableOpacity, 
+  ScrollView,
+  ActivityIndicator,
+  Alert
+} from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { useGetStudentQuery, useUpdateStudentMutation } from '@/src/redux/services/auth';
+import { router } from 'expo-router';
+
+export default function EditStudentScreen() {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const { id } = route.params;
+  
+  const { 
+    data: studentData, 
+    isLoading: isLoadingStudent, 
+    isError: isStudentError 
+  } = useGetStudentQuery(id);
+  
+  const [updateStudent, { isLoading: isUpdating }] = useUpdateStudentMutation();
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    contactNumber: '',
+    address: '',
+    guardianContact: '',
+  });
+  
+  const [errors, setErrors] = useState({});
+
+  // Load student data when available
+  useEffect(() => {
+    if (studentData?.data) {
+      const student = studentData.data;
+      setFormData({
+        name: student.userId?.name || '',
+        email: student.userId?.email || '',
+        contactNumber: student.contactNumber || '',
+        address: student.address || '',
+        guardianContact: student.guardianContact || '',
+      });
+    }
+  }, [studentData]);
+  
+  // Handle form submission
+  const handleSubmit = async () => {
+    // Validate form
+    const newErrors = {};
+    if (!formData.name) newErrors.name = 'Name is required';
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)) {
+      newErrors.email = 'Invalid email address';
+    }
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    
+    try {
+      await updateStudent({ id, ...formData }).unwrap();
+      router.push(`/(administration)/(drawer)/(tabs)/module/students/${id}`);
+      Alert.alert('Success', 'Student updated successfully');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update student');
+      console.error('Failed to update student:', error);
+    }
+  };
+  
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error when typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: null }));
+    }
+  };
+  
+  if (isLoadingStudent) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text style={styles.loadingText}>Loading student data...</Text>
+      </View>
+    );
+  }
+  
+  if (isStudentError) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>Error loading student data</Text>
+        <TouchableOpacity 
+          style={styles.button} 
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.buttonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+  
+  return (
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>Edit Student</Text>
+      
+      <View style={styles.formField}>
+        <Text style={styles.label}>Student Name</Text>
+        <TextInput
+          style={[styles.input, errors.name && styles.inputError]}
+          value={formData.name}
+          onChangeText={(value) => handleChange('name', value)}
+          placeholder="Enter student name"
+        />
+        {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+      </View>
+      
+      <View style={styles.formField}>
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          style={[styles.input, errors.email && styles.inputError]}
+          value={formData.email}
+          onChangeText={(value) => handleChange('email', value)}
+          placeholder="Enter email address"
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+      </View>
+      
+      <View style={styles.formField}>
+        <Text style={styles.label}>Contact Number</Text>
+        <TextInput
+          style={styles.input}
+          value={formData.contactNumber}
+          onChangeText={(value) => handleChange('contactNumber', value)}
+          placeholder="Enter contact number"
+          keyboardType="phone-pad"
+        />
+      </View>
+      
+      <View style={styles.formField}>
+        <Text style={styles.label}>Guardian Contact</Text>
+        <TextInput
+          style={styles.input}
+          value={formData.guardianContact}
+          onChangeText={(value) => handleChange('guardianContact', value)}
+          placeholder="Enter guardian contact number"
+          keyboardType="phone-pad"
+        />
+      </View>
+      
+      <View style={styles.formField}>
+        <Text style={styles.label}>Address</Text>
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          value={formData.address}
+          onChangeText={(value) => handleChange('address', value)}
+          placeholder="Enter address"
+          multiline={true}
+          numberOfLines={4}
+        />
+      </View>
+      
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[styles.submitButton, isUpdating && styles.disabledButton]}
+          onPress={handleSubmit}
+          disabled={isUpdating}
+        >
+          <Text style={styles.submitButtonText}>
+            {isUpdating ? 'Updating...' : 'Update Student'}
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.cancelButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.cancelButtonText}>Cancel</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#f5f5f5',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  formField: {
+    marginBottom: 16,
+  },
+  label: {
+    marginBottom: 8,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  input: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    fontSize: 16,
+  },
+  inputError: {
+    borderColor: '#ff0000',
+  },
+  textArea: {
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  errorText: {
+    color: '#ff0000',
+    marginTop: 4,
+    fontSize: 14,
+  },
+  buttonContainer: {
+    marginTop: 24,
+    marginBottom: 40,
+    gap: 12,
+  },
+  submitButton: {
+    backgroundColor: '#2196F3',
+    padding: 15,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  disabledButton: {
+    opacity: 0.7,
+  },
+  submitButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
+    padding: 15,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+  }
+});

@@ -1,0 +1,319 @@
+import express from 'express';
+import userRoute from './user.router.js';
+import studentRoute from './student.router.js';
+import subjectRoute from './subject.router.js';
+import feeRouter from './fee.router.js';
+import teacherRoute from './teacher.router.js';
+import classRouter from './class.router.js';
+import attendanceRouter from './studentAttendance.router.js';
+import parentRouter from './parent.router.js';
+import staffAttendanceRouter from './staffAtandance.router.js';
+
+const mainRoute = express.Router();
+
+mainRoute.use('/api', userRoute);
+mainRoute.use('/api/class', classRouter);
+mainRoute.use('/api/subject', subjectRoute);
+mainRoute.use('/api/teacher', teacherRoute);
+mainRoute.use('/api/student', studentRoute);
+mainRoute.use('/api/parent', parentRouter);
+mainRoute.use('/api/student-attendance', attendanceRouter);
+mainRoute.use('/api/staff-attendance', staffAttendanceRouter);
+mainRoute.use('/api/fee', feeRouter);
+
+mainRoute.get('/', (req, res) => {
+  res.send('Welcome');
+});
+
+export default mainRoute;
+
+
+import express from 'express';
+import teacherController from '../controllers/teacherController.js';
+import auth from '../middlewares/checkUserAuth.js';
+import extractTenantId from '../middlewares/tenantMiddleware.js';
+
+const teacherRoute = express.Router();
+
+// Public routes - need tenant middleware
+teacherRoute.post('/create', extractTenantId, teacherController.createTeacher);
+teacherRoute.get('/all', extractTenantId, teacherController.getAllTeachers);
+teacherRoute.get('/:id', extractTenantId, teacherController.getTeacher);
+teacherRoute.put('/:id', extractTenantId, teacherController.updateTeacher);
+teacherRoute.delete('/:id', extractTenantId, teacherController.deleteTeacher);
+teacherRoute.get('/:id/classes', extractTenantId, teacherController.getTeacherClasses);
+teacherRoute.get('/:id/subjects', extractTenantId, teacherController.getTeacherSubjects);
+
+// If you want to protect any routes with authentication, you can add them like this:
+// teacherRoute.post('/create', auth, teacherController.createTeacher);
+// teacherRoute.put('/:id', auth, teacherController.updateTeacher);
+// teacherRoute.delete('/:id', auth, teacherController.deleteTeacher);
+
+export default teacherRoute;
+
+// routes/user.router.js
+import express from 'express';
+import userController from '../controllers/userController.js';
+import auth from '../middlewares/checkUserAuth.js';
+import extractTenantId from '../middlewares/tenantMiddleware.js';
+import { upload } from '../middlewares/multer.middleware.js';
+
+const userRoute = express.Router();
+
+// Public routes - need tenant middleware
+userRoute.post('/signup', extractTenantId, userController.signup);
+userRoute.get('/user', extractTenantId, userController.alluser);
+userRoute.post('/login', extractTenantId, userController.Login);
+userRoute.post('/verifyEmail', extractTenantId, userController.verifyEmail);
+userRoute.post('/resetPassword/:id/:token', extractTenantId, userController.resetPassword);
+userRoute.post('/request-otp', extractTenantId, userController.requestOTP);
+userRoute.post('/reset-password-with-otp', extractTenantId, userController.resetPasswordWithOTP); // New route for OTP-based reset
+
+// Protected routes - auth middleware already gets tenant from token
+userRoute.get('/profile', auth, userController.userProfile);
+userRoute.post('/change-password', auth, userController.changePassword);
+userRoute.post(
+  '/update-profile-image',
+  auth,
+  upload.single('image'),
+  userController.updateProfileImage
+);
+
+export default userRoute;
+
+// routes/student.router.js
+import express from 'express';
+import studentController from '../controllers/studentController.js';
+import auth from '../middlewares/checkUserAuth.js';
+import extractTenantId from '../middlewares/tenantMiddleware.js';
+
+const studentRoute = express.Router();
+
+// Public routes 
+studentRoute.get('/all', extractTenantId, studentController.getAllStudents);
+studentRoute.get('/:id', extractTenantId, studentController.getStudent);
+studentRoute.get('/class/:classId', extractTenantId, studentController.getStudentsByClass);
+studentRoute.get('/demographics', extractTenantId, studentController.getStudentsByDemographics);
+studentRoute.get('/transport/:mode', extractTenantId, studentController.getStudentsByTransport);
+studentRoute.get('/disability', extractTenantId, studentController.getStudentsWithDisability);
+studentRoute.get('/admission', extractTenantId, studentController.getStudentsByAdmission);
+
+// Protected routes - need both tenant middleware and auth middleware
+// Create
+studentRoute.post('/create', extractTenantId, auth, studentController.createStudent);
+
+// Update
+studentRoute.put('/:id', extractTenantId, auth, studentController.updateStudent);
+
+// Delete
+studentRoute.delete('/:id', extractTenantId, auth, studentController.deleteStudent);
+
+// Additional routes for student data
+studentRoute.get('/:id/attendance', extractTenantId, auth, studentController.getStudentAttendance);
+studentRoute.get('/:id/results', extractTenantId, auth, studentController.getStudentResults);
+studentRoute.get('/:id/fees', extractTenantId, auth, studentController.getStudentFees);
+
+export default studentRoute;
+
+import express from 'express';
+import classController from '../controllers/classController.js';
+import extractTenantId from '../middlewares/tenantMiddleware.js';
+
+const classRouter = express.Router();
+
+// Create a new class
+classRouter.post('/create', extractTenantId, classController.createClass);
+
+// Get all classes with optional filters
+classRouter.get('/all', extractTenantId, classController.getClasses);
+
+// Get single class by ID with full details
+classRouter.get('/:id', extractTenantId, classController.getClassById);
+
+// Update class details
+classRouter.put('/:id', extractTenantId, classController.updateClass);
+
+// Delete class
+classRouter.delete('/:id', extractTenantId, classController.deleteClass);
+
+// Add student to class
+classRouter.post('/add-student', extractTenantId, classController.addStudent);
+
+// Remove student from class
+classRouter.delete('/:classId/student/:studentId', extractTenantId, classController.removeStudent);
+
+// Update class schedule
+classRouter.put('/:id/schedule', extractTenantId, classController.updateSchedule);
+
+// Update single period
+classRouter.put('/:id/period', extractTenantId, classController.updateSinglePeriod);
+
+// Update class subjects
+classRouter.put('/:id/subjects', extractTenantId, classController.updateClassSubjects);
+
+// Delete subjects from class
+classRouter.delete('/:id/subjects', extractTenantId, classController.deleteClassSubjects);
+
+export default classRouter;
+
+
+import express from 'express';
+import subjectController from '../controllers/subjectController.js';
+import extractTenantId from '../middlewares/tenantMiddleware.js';
+
+const subjectRoute = express.Router();
+
+// Create a new subject
+subjectRoute.post('/create', extractTenantId, subjectController.createSubject);
+
+// Get all subjects
+subjectRoute.get('/all', extractTenantId, subjectController.getSubjects);
+
+// Get a single subject by ID
+subjectRoute.get('/:id', extractTenantId, subjectController.getSubjectById);
+
+// Update a subject by ID
+subjectRoute.put('/:id', extractTenantId, subjectController.updateSubject);
+
+// Delete a subject by ID
+subjectRoute.delete('/:id', extractTenantId, subjectController.deleteSubject);
+
+export default subjectRoute;
+
+import express from 'express';
+import { studentAttendanceController } from '../controllers/studentAttendanceController.js';
+import extractTenantId from '../middlewares/tenantMiddleware.js';
+
+const studentAttendanceRouter = express.Router();
+
+// Mark daily attendance for a student
+studentAttendanceRouter.post('/mark-daily', extractTenantId, studentAttendanceController.markDailyAttendance);
+
+// Mark period-wise attendance for a student
+studentAttendanceRouter.post('/mark-period', extractTenantId, studentAttendanceController.markPeriodAttendance);
+
+// Bulk mark daily attendance for multiple students
+studentAttendanceRouter.post('/bulk-mark-daily', extractTenantId, studentAttendanceController.bulkMarkDailyAttendance);
+
+// Bulk mark period-wise attendance for multiple students
+studentAttendanceRouter.post('/bulk-mark-period', extractTenantId, studentAttendanceController.bulkMarkPeriodAttendance);
+
+// Get student attendance for a specific date
+studentAttendanceRouter.get('/student/:studentId/:date', extractTenantId, studentAttendanceController.getStudentAttendance);
+
+// Get class attendance for a specific date
+studentAttendanceRouter.get('/class/:classId/:date', extractTenantId, studentAttendanceController.getClassAttendance);
+
+// Get student attendance report for a date range
+studentAttendanceRouter.get('/report/student/:studentId', extractTenantId, studentAttendanceController.getStudentAttendanceReport);
+
+// Get class attendance report for a date range
+studentAttendanceRouter.get('/report/class/:classId', extractTenantId, studentAttendanceController.getClassAttendanceReport);
+
+// Delete attendance record
+studentAttendanceRouter.delete('/:attendanceId', extractTenantId, studentAttendanceController.deleteAttendance);
+
+export default studentAttendanceRouter;
+
+import express from 'express';
+import staffAttendanceController from '../controllers/staffAttendanceContoller.js';
+import extractTenantId from '../middlewares/tenantMiddleware.js';
+
+const staffAttendanceRouter = express.Router();
+
+// Mark daily attendance for a staff member
+staffAttendanceRouter.post('/daily', extractTenantId, staffAttendanceController.markDailyAttendance);
+
+// Mark attendance for multiple staff members at once
+staffAttendanceRouter.post('/bulk', extractTenantId, staffAttendanceController.markBulkAttendance);
+
+// Get staff attendance record by ID
+staffAttendanceRouter.get('/:id', extractTenantId, staffAttendanceController.getAttendanceById);
+
+// Get staff attendance for a specific date range
+staffAttendanceRouter.get('/', extractTenantId, staffAttendanceController.getAttendance);
+
+// Update a staff attendance record
+staffAttendanceRouter.put('/:id', extractTenantId, staffAttendanceController.updateAttendance);
+
+// Delete a staff attendance record
+staffAttendanceRouter.delete('/:id', extractTenantId, staffAttendanceController.deleteAttendance);
+
+// Get attendance statistics for staff
+staffAttendanceRouter.get('/stats', extractTenantId, staffAttendanceController.getAttendanceStats);
+
+// Check in staff (mark arrival)
+staffAttendanceRouter.post('/check-in', extractTenantId, staffAttendanceController.checkIn);
+
+// Check out staff (mark departure)
+staffAttendanceRouter.post('/check-out', extractTenantId, staffAttendanceController.checkOut);
+
+// Add/update substituted classes for a staff member
+staffAttendanceRouter.post('/substitution', extractTenantId, staffAttendanceController.updateSubstitution);
+
+export default staffAttendanceRouter;
+
+// routes/parent.router.js
+import express from 'express';
+import parentController from '../controllers/parentController.js';
+import auth from '../middlewares/checkUserAuth.js';
+import extractTenantId from '../middlewares/tenantMiddleware.js';
+
+const parentRoute = express.Router();
+
+// Public routes - need tenant middleware
+parentRoute.post('/create', extractTenantId, parentController.createParent);
+parentRoute.get('/all', extractTenantId, parentController.getAllParents);
+parentRoute.get('/:id', extractTenantId, parentController.getParent);
+parentRoute.put('/:id', extractTenantId, parentController.updateParent);
+parentRoute.delete('/:id', extractTenantId, parentController.deleteParent);
+parentRoute.get('/:id/children', extractTenantId, parentController.getChildrenDetails);
+
+export default parentRoute;
+// import express from 'express';
+// import feeController from '../controllers/feeController.js';
+
+// const feeRouter = express.Router();
+
+// // Base routes
+// feeRouter.get('/fee/getall', feeController.getAllFees);
+// feeRouter.post('/fee/create', feeController.createFee);
+
+// feeRouter.get('/fee/get/:id', feeController.getFee);
+// feeRouter.put('/fee/update/:id', feeController.updateFee);
+// feeRouter.delete('/fee/delete/:id', feeController.deleteFee);
+
+// // Additional routes
+// feeRouter.get('/student/:studentId', feeController.getStudentFees);
+// feeRouter.get('/pending', feeController.getPendingFees);
+
+// export default feeRouter;
+
+import express from 'express';
+import feeController from '../controllers/feeController.js';
+import extractTenantId from '../middlewares/tenantMiddleware.js';
+
+const feeRouter = express.Router();
+
+// Get all fees
+feeRouter.get('/', extractTenantId, feeController.getAllFees);
+
+// Create new fee record
+feeRouter.post('/', extractTenantId, feeController.createFee);
+
+// Get single fee record
+feeRouter.get('/:id', extractTenantId, feeController.getFee);
+
+// Update fee record
+feeRouter.put('/:id', extractTenantId, feeController.updateFee);
+
+// Delete fee record
+feeRouter.delete('/:id', extractTenantId, feeController.deleteFee);
+
+// Get fees by student
+feeRouter.get('/student/:studentId', extractTenantId, feeController.getStudentFees);
+
+// Get pending fees
+feeRouter.get('/status/pending', extractTenantId, feeController.getPendingFees);
+
+export default feeRouter;
