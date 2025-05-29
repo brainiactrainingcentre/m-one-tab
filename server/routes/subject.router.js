@@ -1,13 +1,3 @@
-// import express from 'express';
-// import subjectController from '../controllers/subjectController.js';
-
-// const subjectRoute = express.Router();
-
-// subjectRoute.post('/subject/create', subjectController.createSubject);
-// subjectRoute.get('/subject/getall', subjectController.getSubjects);
-// subjectRoute.get('/subject/get/:id', subjectController.getSubjectById);
-// subjectRoute.put('/subject/update/:id', subjectController.updateSubject);
-// subjectRoute.delete('/subject/delete/:id', subjectController.deleteSubject);
 
 // export default subjectRoute;
 import express from 'express';

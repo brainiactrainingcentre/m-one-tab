@@ -15,7 +15,6 @@ studentRoute.get('/transport/:mode', extractTenantId, studentController.getStude
 studentRoute.get('/disability', extractTenantId, studentController.getStudentsWithDisability);
 studentRoute.get('/admission', extractTenantId, studentController.getStudentsByAdmission);
 
-// Protected routes - need both tenant middleware and auth middleware
 // Create
 studentRoute.post('/create', extractTenantId, auth, studentController.createStudent);
 

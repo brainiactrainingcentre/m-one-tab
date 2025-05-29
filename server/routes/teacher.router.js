@@ -1,23 +1,4 @@
-// import express from 'express';
-// import teacherController from '../controllers/teacherController.js';
 
-// const teacherRoute = express.Router();
-
-// // Base routes
-// teacherRoute.route('/teacher/')
-//   .get(teacherController.getAllTeachers)
-//   .post(teacherController.createTeacher);
-
-// teacherRoute.route('/teacher/:id')
-//   .get(teacherController.getTeacher)
-//   .put(teacherController.updateTeacher)
-//   .delete(teacherController.deleteTeacher);
-
-// // Additional routes
-// teacherRoute.get('/teacher/:id/classes', teacherController.getTeacherClasses);
-// teacherRoute.get('/teacher/:id/subjects', teacherController.getTeacherSubjects);
-
-// export default teacherRoute;
 // routes/teacher.router.js
 import express from 'express';
 import teacherController from '../controllers/teacherController.js';

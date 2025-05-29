@@ -2,18 +2,18 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { Platform } from "react-native";
 
-const getBaseUrl = () => {
-  if (__DEV__) {
-    if (Platform.OS === "android") {
-      return "http://192.168.225.147:8000/api/";
-    }
-    return "http://localhost:8000/api/";
-  }
-};
-
 // const getBaseUrl = () => {
-//   return "http://one-tab-m.onrender.com/";
+//   if (__DEV__) {
+//     if (Platform.OS === "android") {
+//       return "http://192.168.225.147:8000/api/";
+//     }
+//     return "http://localhost:8000/api/";
+//   }
 // };
+
+const getBaseUrl = () => {
+  return "http://one-tab-m.onrender.com/api/";
+};
 
 export const schoolApi = createApi({
   reducerPath: "schoolApi",

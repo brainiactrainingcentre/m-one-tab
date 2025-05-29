@@ -162,7 +162,7 @@ const getAllParents = async (req, res) => {
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const ParentModel = getParentModel(connection);
-
+    const StudentModel = getStudentModel(connection);
     const parents = await ParentModel.find()
       .populate("userId")
       .populate({
@@ -186,6 +186,7 @@ const getParent = async (req, res) => {
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const ParentModel = getParentModel(connection);
+    const StudentModel = getStudentModel(connection);
 
     const parent = await ParentModel.findById(req.params.id)
       .populate("userId")

@@ -1,6 +1,6 @@
 import getClassModel from "../models/classModel.js";
 import getTeacherModel from "../models/teacherModels.js";
-import getStudentModel from  "../models/studentModel.js";
+import getStudentModel from "../models/studentModel.js";
 import getSubjectModel from "../models/subjectModel.js";
 import mongoose from "mongoose";
 import {
@@ -9,7 +9,8 @@ import {
   findSubjectObjectId,
 } from "../utils/findObjectId.js";
 import { getTenantDb } from "../utils/getTenantDb.js";
-import 'dotenv/config';
+import "dotenv/config";
+import getUserModel from "../models/userModel.js";
 
 // Helper function to check if ID is valid
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
@@ -18,7 +19,7 @@ const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 const createClass = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    
+
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const Class = getClassModel(connection);
@@ -99,11 +100,13 @@ const createClass = async (req, res) => {
 const getClasses = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    
+
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const Class = getClassModel(connection);
-
+    getTeacherModel(connection);
+    getStudentModel(connection);
+    getSubjectModel(connection);
     const { academicYear, section } = req.query;
     const filter = {};
 
@@ -138,11 +141,14 @@ const getClasses = async (req, res) => {
 const getClassById = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    
+
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const Class = getClassModel(connection);
-
+    getTeacherModel(connection);
+    getUserModel(connection);
+    getStudentModel(connection);
+    getSubjectModel(connection);
     const { id } = req.params;
 
     if (!isValidObjectId(id)) {
@@ -222,11 +228,14 @@ const getClassById = async (req, res) => {
 const updateClass = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    
+
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const Class = getClassModel(connection);
-
+    getTeacherModel(connection);
+    getUserModel(connection);
+    getStudentModel(connection);
+    getSubjectModel(connection);
     const { id } = req.params;
     const updates = { ...req.body };
 
@@ -261,8 +270,8 @@ const updateClass = async (req, res) => {
       select: "employeeId userId",
       populate: {
         path: "userId",
-        select: "name email"
-      }
+        select: "name email",
+      },
     });
 
     if (!updatedClass) {
@@ -276,7 +285,6 @@ const updateClass = async (req, res) => {
       success: true,
       data: updatedClass,
     });
-
   } catch (error) {
     res.status(400).json({
       success: false,
@@ -289,7 +297,7 @@ const updateClass = async (req, res) => {
 const deleteClass = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    
+
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const Class = getClassModel(connection);
@@ -328,7 +336,7 @@ const deleteClass = async (req, res) => {
 const addStudent = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    
+
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const Class = getClassModel(connection);
@@ -371,7 +379,7 @@ const addStudent = async (req, res) => {
 const removeStudent = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    
+
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const Class = getClassModel(connection);
@@ -414,7 +422,7 @@ const removeStudent = async (req, res) => {
 const updateSchedule = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    
+
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const Class = getClassModel(connection);
@@ -524,7 +532,7 @@ const updateSchedule = async (req, res) => {
 const updateSinglePeriod = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    
+
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const Class = getClassModel(connection);
@@ -557,7 +565,8 @@ const updateSinglePeriod = async (req, res) => {
         ? periodUpdate.subjectId
         : await findSubjectObjectId(periodUpdate.subjectId);
 
-      updateFields["schedule.$[dayFilter].periods.$[periodFilter].subject"] = subjectValue;
+      updateFields["schedule.$[dayFilter].periods.$[periodFilter].subject"] =
+        subjectValue;
     }
 
     // Handle teacherId conditionally
@@ -566,7 +575,8 @@ const updateSinglePeriod = async (req, res) => {
         ? periodUpdate.teacherId
         : await findTeacherObjectId(periodUpdate.teacherId);
 
-      updateFields["schedule.$[dayFilter].periods.$[periodFilter].teacher"] = teacherValue;
+      updateFields["schedule.$[dayFilter].periods.$[periodFilter].teacher"] =
+        teacherValue;
     }
 
     // Other fields
@@ -628,7 +638,7 @@ const updateSinglePeriod = async (req, res) => {
 const updateClassSubjects = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    
+
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const Class = getClassModel(connection);
@@ -652,7 +662,9 @@ const updateClassSubjects = async (req, res) => {
     }
 
     // Check if all subject IDs are valid ObjectIds
-    const allAreObjectIds = subjectIds.every((id) => mongoose.Types.ObjectId.isValid(id));
+    const allAreObjectIds = subjectIds.every((id) =>
+      mongoose.Types.ObjectId.isValid(id)
+    );
 
     let subjectObjectIds;
     if (!allAreObjectIds) {
@@ -699,7 +711,7 @@ const updateClassSubjects = async (req, res) => {
 const deleteClassSubjects = async (req, res) => {
   try {
     const tenantId = req.tenantId;
-    
+
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const Class = getClassModel(connection);

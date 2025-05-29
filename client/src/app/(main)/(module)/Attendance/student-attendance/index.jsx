@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, Alert, ScrollView } from "react-native";
 import { router } from "expo-router";
 import {
-  useGetClassesQuery,
   useGetStudentsByClassQuery,
-  useBulkCreateStudentAttendanceMutation
+  useBulkMarkDailyAttendanceMutation,
+  useGetClassesQuery,
 } from "@/src/redux/services/auth";
 import { Ionicons } from "@expo/vector-icons";
 import SearchInput from "@/src/components/common/SearchInput";
@@ -39,46 +39,55 @@ const StudentAttendanceScreen = () => {
     skip: !selectedClassId,
   });
 
-  const [bulkCreateAttendance, { isLoading: isSubmitting }] = useBulkCreateStudentAttendanceMutation();
+  const [bulkCreateAttendance, { isLoading: isSubmitting }] = useBulkMarkDailyAttendanceMutation();
 
   // Initialize attendance when students data loads
   useEffect(() => {
     if (selectedClassId) {
-      // console.log("Selected class ID:", selectedClassId);
+      console.log("Selected class ID:", selectedClassId);
     }
     if (students) {
-      // console.log("Students data structure:", JSON.stringify(students));
+      console.log("Students data structure:", JSON.stringify(students));
+      console.log("Students data array:", students?.data);
       
-      // Initialize attendance status for all students as "present" by default
-      if (Array.isArray(students?.data?.students)) {
+      // FIXED: Initialize attendance status for all students as "present" by default
+      if (Array.isArray(students?.data)) {
         const initialStatus = {};
         const initialRemarks = {};
-        students.data.students.forEach(student => {
+        students.data.forEach(student => {
           initialStatus[student._id] = "present";
           initialRemarks[student._id] = "";
         });
         setAttendanceStatus(initialStatus);
         setRemarks(initialRemarks);
+        console.log("Initialized attendance for", students.data.length, "students");
       }
     }
   }, [selectedClassId, students]);
 
-  // Filter students based on search term
+  // FIXED: Filter students based on search term
   useEffect(() => {
     let studentArray = [];
 
-    if (Array.isArray(students?.data?.students)) {
-      const classInfo = students.data;
-      studentArray = classInfo.students.map((s) => ({
-        _id: s._id,
-        name: s.userId?.name || "Unnamed",
-        studentId: s.studentId,
-        email: s.userId?.email || "",
-        className: classInfo.name,
-        section: classInfo.section,
-        parentName: s.userId?.parentName || "",
-        contactNumber: s.userId?.contactNumber || "",
+    // The API returns students directly in data array
+    if (Array.isArray(students?.data)) {
+      studentArray = students.data.map((student) => ({
+        _id: student._id,
+        name: student.name || "Unnamed",
+        studentId: student.studentId,
+        email: student.email || "",
+        className: student.className,
+        section: student.section,
+        parentName: student.parentName || "",
+        contactNumber: student.contactNumber || "",
+        dateOfBirth: student.dateOfBirth,
+        gender: student.gender,
+        bloodGroup: student.bloodGroup,
+        academicYear: student.academicYear,
+        address: student.address
       }));
+      
+      console.log("Processed student array:", studentArray.length, "students");
     }
 
     if (studentArray.length > 0) {
@@ -89,8 +98,10 @@ const StudentAttendanceScreen = () => {
           student.email.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredStudents(filtered);
+      console.log("Filtered students:", filtered.length);
     } else {
       setFilteredStudents([]);
+      console.log("No students to filter");
     }
   }, [students, searchTerm]);
 

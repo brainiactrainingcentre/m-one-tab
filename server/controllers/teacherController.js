@@ -206,7 +206,10 @@ const getAllTeachers = async (req, res) => {
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const TeacherModel = getTeacherModel(connection);
-
+    
+      getSubjectModel(connection);
+      getUserModel(connection)
+      getClassModel(connection)
     const teachers = await TeacherModel.find()
       .populate("userId", "name email role")
       .populate("subjects", "name code")
@@ -233,7 +236,9 @@ const getTeacher = async (req, res) => {
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const TeacherModel = getTeacherModel(connection);
-
+      getSubjectModel(connection);
+      getUserModel(connection)
+      getClassModel(connection)
     const teacher = await TeacherModel.findById(req.params.id)
       .populate("userId", "name email")
       .populate("subjects", "name code")

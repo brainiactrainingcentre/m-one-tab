@@ -15,8 +15,8 @@ import DropdownField from "@/src/components/atoms/DropdownField";
 
 const tenantOptions = [
   { label: "onetab", value: "onetab" },
-  { label: "Org B", value: "org_b" },
-  { label: "Org C", value: "org_c" },
+  { label: "KK_Academy", value: "kk_academy" },
+  { label: "BTC", value: "btc" },
 ];
 
 const loginSchema = Yup.object().shape({

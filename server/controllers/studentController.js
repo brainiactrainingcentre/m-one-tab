@@ -226,7 +226,9 @@ const getAllStudents = async (req, res) => {
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const StudentModel = getStudentModel(connection);
-    
+      getClassModel(connection);
+      getUserModel(connection);
+      getFeeCategoryModel(connection);
     const students = await StudentModel.find()
     .populate("userId", "name email role")
     .populate({
@@ -264,7 +266,9 @@ const getStudent = async (req, res) => {
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const StudentModel = getStudentModel(connection);
-    
+    getClassModel(connection);
+      getUserModel(connection);
+      getFeeCategoryModel(connection);
     const student = await StudentModel.findById(req.params.id)
     .populate("userId", "name email role")
     .populate({
@@ -318,6 +322,9 @@ const updateStudent = async (req, res) => {
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const StudentModel = getStudentModel(connection);
+    const ClassModel = getClassModel(connection);
+    const UserModel = getUserModel(connection);
+    const FeeCategoryModel = getFeeCategoryModel(connection);
     
     // Handle normalized fields for update
     const updateData = { ...req.body };
@@ -408,7 +415,9 @@ const getStudentsByClass = async (req, res) => {
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const StudentModel = getStudentModel(connection);
-    
+    getClassModel(connection);
+      getUserModel(connection);
+      getFeeCategoryModel(connection);
     // Find students by classId and populate only necessary fields
     const students = await StudentModel.find({
       classId: req.params.classId,
@@ -458,7 +467,8 @@ const getStudentsByDemographics = async (req, res) => {
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const StudentModel = getStudentModel(connection);
-    
+    getClassModel(connection);
+      getUserModel(connection);
     const { religion, socialCategory, minorityStatus, rteAdmission } = req.query;
     
     const queryFilters = {};
@@ -489,7 +499,8 @@ const getStudentsByTransport = async (req, res) => {
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const StudentModel = getStudentModel(connection);
-    
+    getClassModel(connection);
+      getUserModel(connection);
     const { mode } = req.params;
     
     const students = await StudentModel.find({
@@ -516,7 +527,8 @@ const getStudentsWithDisability = async (req, res) => {
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const StudentModel = getStudentModel(connection);
-    
+    getClassModel(connection);
+      getUserModel(connection);
     const students = await StudentModel.find({
       hasDisability: true
     })
@@ -541,7 +553,8 @@ const getStudentsByAdmission = async (req, res) => {
     // Get tenant database connection
     const connection = await getTenantDb(tenantId);
     const StudentModel = getStudentModel(connection);
-    
+    getClassModel(connection);
+      getUserModel(connection);
     const { admissionClass, academicYear } = req.query;
     
     const queryFilters = {};
