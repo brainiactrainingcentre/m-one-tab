@@ -1,0 +1,764 @@
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+  Alert,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import InputField from "@/src/components/atoms/inputField";
+import MyButton from "@/src/components/atoms/myButton";
+import DateField from "@/src/components/atoms/DateField";
+import OptionArray from "@/src/utils/Arrays/optionArray";
+import DropdownField from "@/src/components/atoms/DropdownField";
+import CustomToggle from "@/src/components/atoms/CustomToggle";
+
+const EditTeacherScreen = () => {
+  const router = useRouter();
+
+  // Section collapse state
+  const [expandedSections, setExpandedSections] = useState({
+    personalInfo: true,
+    contactInfo: true,
+    academicInfo: true,
+    documentInfo: false,
+    emergencyInfo: false,
+    additionalInfo: false,
+  });
+
+  const toggleSection = (section) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
+  const [formData, setFormData] = useState({
+    // Personal Information
+    firstName: "",
+    lastName: "",
+    gender: "",
+    dateOfBirth: new Date(),
+    bloodGroup: "",
+    nationality: "",
+    religion: "",
+    category: "",
+    
+    // Contact Information
+    address: "",
+    city: "",
+    state: "",
+    pincode: "",
+    phoneNumber: "",
+    emailAddress: "",
+    
+    // Academic Information
+    previousSchool: "",
+    gradeApplying: "",
+    stream: "",
+    admissionDate: new Date(),
+    rollNumber: "",
+    scholarshipEligible: false,
+    
+    // Document Information
+    birthCertificate: false,
+    previousMarksheet: false,
+    transferCertificate: false,
+    characterCertificate: false,
+    
+    // Emergency Contact
+    guardianName: "",
+    guardianRelation: "",
+    guardianContact: "",
+    guardianAddress: "",
+    
+    // Additional Information
+    medicalConditions: "",
+    specialNeeds: false,
+    transport: false,
+    hostel: false,
+    remarks: "",
+  });
+
+  const [errors, setErrors] = useState({});
+
+  const handleChange = (field) => (value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: null }));
+    }
+  };
+
+  const handleToggle = (field) => {
+    setFormData((prev) => ({ ...prev, [field]: !prev[field] }));
+  };
+
+  // Format date as YYYY-MM-DD
+  const formatDateToYYYYMMDD = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    // Personal Information validation
+    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
+    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
+    if (!formData.gender) newErrors.gender = "Gender is required";
+    
+    // Contact Information validation
+    if (!formData.address.trim()) newErrors.address = "Address is required";
+    if (!formData.phoneNumber.trim()) {
+      newErrors.phoneNumber = "Phone number is required";
+    } else if (!/^\d{10}$/.test(formData.phoneNumber)) {
+      newErrors.phoneNumber = "Phone number must be 10 digits";
+    }
+    
+    if (formData.emailAddress && !/\S+@\S+\.\S+/.test(formData.emailAddress)) {
+      newErrors.emailAddress = "Email is invalid";
+    }
+    
+    // Academic Information validation
+    if (!formData.gradeApplying) newErrors.gradeApplying = "Grade is required";
+    
+    // Emergency Contact validation
+    if (!formData.guardianName.trim()) newErrors.guardianName = "Guardian name is required";
+    if (!formData.guardianContact.trim()) {
+      newErrors.guardianContact = "Guardian contact is required";
+    } else if (!/^\d{10}$/.test(formData.guardianContact)) {
+      newErrors.guardianContact = "Contact number must be 10 digits";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    try {
+      // Create payload for the backend
+      const payload = {
+        // Personal Information
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        gender: formData.gender,
+        dateOfBirth: formatDateToYYYYMMDD(formData.dateOfBirth),
+        bloodGroup: formData.bloodGroup,
+        nationality: formData.nationality,
+        religion: formData.religion,
+        category: formData.category,
+        
+        // Contact Information
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        pincode: formData.pincode,
+        phoneNumber: formData.phoneNumber,
+        emailAddress: formData.emailAddress,
+        
+        // Academic Information
+        previousSchool: formData.previousSchool,
+        gradeApplying: formData.gradeApplying,
+        stream: formData.stream,
+        admissionDate: formatDateToYYYYMMDD(formData.admissionDate),
+        rollNumber: formData.rollNumber,
+        scholarshipEligible: formData.scholarshipEligible,
+        
+        // Document Information
+        documents: {
+          birthCertificate: formData.birthCertificate,
+          previousMarksheet: formData.previousMarksheet,
+          transferCertificate: formData.transferCertificate,
+          characterCertificate: formData.characterCertificate,
+        },
+        
+        // Emergency Contact
+        guardianName: formData.guardianName,
+        guardianRelation: formData.guardianRelation,
+        guardianContact: formData.guardianContact,
+        guardianAddress: formData.guardianAddress,
+        
+        // Additional Information
+        medicalConditions: formData.medicalConditions,
+        specialNeeds: formData.specialNeeds,
+        transport: formData.transport,
+        hostel: formData.hostel,
+        remarks: formData.remarks,
+      };
+
+      console.log("Submitting admission payload:", payload);
+
+      // Mock API call for demonstration
+      // const result = await createStudentAdmission(payload).unwrap();
+      
+      Alert.alert("Success", "Student admission form submitted successfully");
+      router.back();
+    } catch (error) {
+      console.error("Failed to submit admission form:", error);
+      Alert.alert(
+        "Error",
+        error.data?.message || "Failed to submit admission form"
+      );
+    }
+  };
+
+  // Section Header Component
+  const SectionHeader = ({ title, icon, section }) => (
+    <TouchableOpacity
+      onPress={() => toggleSection(section)}
+      className="flex-row items-center justify-between py-3 border-b border-gray-200"
+    >
+      <View className="flex-row items-center">
+        <MaterialIcons name={icon} size={22} color="#007bff" />
+        <Text className="text-[16px] font-bold text-blue-600 ml-2">{title}</Text>
+      </View>
+      <MaterialIcons
+        name={expandedSections[section] ? "keyboard-arrow-up" : "keyboard-arrow-down"}
+        size={24}
+        color="#007bff"
+      />
+    </TouchableOpacity>
+  );
+
+  return (
+    <SafeAreaView className="flex-1 bg-gray-100">
+      <ScrollView className="flex-1">
+        {/* Header */}
+        <View className="flex-row items-center p-4 bg-white border-b border-gray-200">
+          <TouchableOpacity onPress={() => router.back()} className="mr-4">
+            <Ionicons name="arrow-back" size={24} color="#007bff" />
+          </TouchableOpacity>
+          <View>
+            <Text className="text-xl font-bold">Student Admission</Text>
+            <Text className="text-gray-500 text-sm">Fill out the student details</Text>
+          </View>
+        </View>
+
+        {/* Main Content */}
+        <View className="p-4">
+          {/* Personal Information Section */}
+          <View className="bg-white rounded-lg shadow-sm mb-4 p-4">
+            <SectionHeader
+              title="Personal Information"
+              icon="person"
+              section="personalInfo"
+            />
+            
+            {expandedSections.personalInfo && (
+              <View className="mt-4">
+                <View className="flex-row justify-between">
+                  <View className="w-[48%]">
+                    <InputField
+                      name="firstName"
+                      value={formData.firstName}
+                      onChangeText={handleChange("firstName")}
+                      placeholder="Enter first name"
+                      labelName="First Name"
+                      error={errors.firstName}
+                      style={{ color: "black" }}
+                    />
+                  </View>
+                  <View className="w-[48%]">
+                    <InputField
+                      name="lastName"
+                      value={formData.lastName}
+                      onChangeText={handleChange("lastName")}
+                      placeholder="Enter last name"
+                      labelName="Last Name"
+                      error={errors.lastName}
+                      style={{ color: "black" }}
+                    />
+                  </View>
+                </View>
+
+                <View className="flex-row justify-between">
+                  <View className="w-[48%]">
+                    <DropdownField
+                      name="gender"
+                      options={OptionArray.genderOptions}
+                      value={formData.gender}
+                      onValueChange={(value) => handleChange("gender")(value)}
+                      placeholder="Select gender"
+                      labelName="Gender"
+                      error={errors.gender}
+                    />
+                  </View>
+                  <View className="w-[48%]">
+                    <DateField
+                      label="Date of Birth"
+                      value={formData.dateOfBirth}
+                      onChange={(date) => handleChange("dateOfBirth")(date)}
+                      error={errors.dateOfBirth}
+                      formatDate={formatDateToYYYYMMDD}
+                    />
+                  </View>
+                </View>
+
+                <View className="flex-row justify-between">
+                  <View className="w-[48%]">
+                    <DropdownField
+                      name="bloodGroup"
+                      options={[
+                        { label: "A+", value: "A+" },
+                        { label: "A-", value: "A-" },
+                        { label: "B+", value: "B+" },
+                        { label: "B-", value: "B-" },
+                        { label: "AB+", value: "AB+" },
+                        { label: "AB-", value: "AB-" },
+                        { label: "O+", value: "O+" },
+                        { label: "O-", value: "O-" },
+                      ]}
+                      value={formData.bloodGroup}
+                      onValueChange={(value) => handleChange("bloodGroup")(value)}
+                      placeholder="Select blood group"
+                      labelName="Blood Group"
+                      error={errors.bloodGroup}
+                    />
+                  </View>
+                  <View className="w-[48%]">
+                    <InputField
+                      name="nationality"
+                      value={formData.nationality}
+                      onChangeText={handleChange("nationality")}
+                      placeholder="Enter nationality"
+                      labelName="Nationality"
+                      error={errors.nationality}
+                      style={{ color: "black" }}
+                    />
+                  </View>
+                </View>
+
+                <View className="flex-row justify-between">
+                  <View className="w-[48%]">
+                    <InputField
+                      name="religion"
+                      value={formData.religion}
+                      onChangeText={handleChange("religion")}
+                      placeholder="Enter religion"
+                      labelName="Religion"
+                      error={errors.religion}
+                      style={{ color: "black" }}
+                    />
+                  </View>
+                  <View className="w-[48%]">
+                    <DropdownField
+                      name="category"
+                      options={[
+                        { label: "General", value: "general" },
+                        { label: "OBC", value: "obc" },
+                        { label: "SC", value: "sc" },
+                        { label: "ST", value: "st" },
+                        { label: "Other", value: "other" },
+                      ]}
+                      value={formData.category}
+                      onValueChange={(value) => handleChange("category")(value)}
+                      placeholder="Select category"
+                      labelName="Category"
+                      error={errors.category}
+                    />
+                  </View>
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* Contact Information Section */}
+          <View className="bg-white rounded-lg shadow-sm mb-4 p-4">
+            <SectionHeader
+              title="Contact Information"
+              icon="contact-mail"
+              section="contactInfo"
+            />
+            
+            {expandedSections.contactInfo && (
+              <View className="mt-4">
+                <InputField
+                  name="address"
+                  value={formData.address}
+                  onChangeText={handleChange("address")}
+                  placeholder="Enter complete address"
+                  labelName="Address"
+                  multiline
+                  numberOfLines={3}
+                  error={errors.address}
+                  style={{ color: "black", textAlignVertical: "top" }}
+                />
+
+                <View className="flex-row justify-between">
+                  <View className="w-[48%]">
+                    <InputField
+                      name="city"
+                      value={formData.city}
+                      onChangeText={handleChange("city")}
+                      placeholder="Enter city"
+                      labelName="City"
+                      error={errors.city}
+                      style={{ color: "black" }}
+                    />
+                  </View>
+                  <View className="w-[48%]">
+                    <InputField
+                      name="state"
+                      value={formData.state}
+                      onChangeText={handleChange("state")}
+                      placeholder="Enter state"
+                      labelName="State"
+                      error={errors.state}
+                      style={{ color: "black" }}
+                    />
+                  </View>
+                </View>
+
+                <View className="flex-row justify-between">
+                  <View className="w-[48%]">
+                    <InputField
+                      name="pincode"
+                      value={formData.pincode}
+                      onChangeText={handleChange("pincode")}
+                      placeholder="Enter pincode"
+                      labelName="Pincode"
+                      keyboardType="numeric"
+                      error={errors.pincode}
+                      style={{ color: "black" }}
+                    />
+                  </View>
+                  <View className="w-[48%]">
+                    <InputField
+                      name="phoneNumber"
+                      value={formData.phoneNumber}
+                      onChangeText={handleChange("phoneNumber")}
+                      placeholder="Enter phone number"
+                      labelName="Phone Number"
+                      keyboardType="phone-pad"
+                      error={errors.phoneNumber}
+                      style={{ color: "black" }}
+                    />
+                  </View>
+                </View>
+
+                <InputField
+                  name="emailAddress"
+                  value={formData.emailAddress}
+                  onChangeText={handleChange("emailAddress")}
+                  placeholder="Enter email address"
+                  labelName="Email Address"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  error={errors.emailAddress}
+                  style={{ color: "black" }}
+                />
+              </View>
+            )}
+          </View>
+
+          {/* Academic Information Section */}
+          <View className="bg-white rounded-lg shadow-sm mb-4 p-4">
+            <SectionHeader
+              title="Academic Information"
+              icon="school"
+              section="academicInfo"
+            />
+            
+            {expandedSections.academicInfo && (
+              <View className="mt-4">
+                <InputField
+                  name="previousSchool"
+                  value={formData.previousSchool}
+                  onChangeText={handleChange("previousSchool")}
+                  placeholder="Enter previous school name"
+                  labelName="Previous School"
+                  error={errors.previousSchool}
+                  style={{ color: "black" }}
+                />
+
+                <View className="flex-row justify-between">
+                  <View className="w-[48%]">
+                    <DropdownField
+                      name="gradeApplying"
+                      options={[
+                        { label: "Grade 1", value: "1" },
+                        { label: "Grade 2", value: "2" },
+                        { label: "Grade 3", value: "3" },
+                        { label: "Grade 4", value: "4" },
+                        { label: "Grade 5", value: "5" },
+                        { label: "Grade 6", value: "6" },
+                        { label: "Grade 7", value: "7" },
+                        { label: "Grade 8", value: "8" },
+                        { label: "Grade 9", value: "9" },
+                        { label: "Grade 10", value: "10" },
+                        { label: "Grade 11", value: "11" },
+                        { label: "Grade 12", value: "12" },
+                      ]}
+                      value={formData.gradeApplying}
+                      onValueChange={(value) => handleChange("gradeApplying")(value)}
+                      placeholder="Select grade"
+                      labelName="Grade Applying For"
+                      error={errors.gradeApplying}
+                    />
+                  </View>
+                  <View className="w-[48%]">
+                    <DropdownField
+                      name="stream"
+                      options={[
+                        { label: "Science", value: "science" },
+                        { label: "Commerce", value: "commerce" },
+                        { label: "Arts", value: "arts" },
+                        { label: "Not Applicable", value: "na" },
+                      ]}
+                      value={formData.stream}
+                      onValueChange={(value) => handleChange("stream")(value)}
+                      placeholder="Select stream"
+                      labelName="Stream (11-12 only)"
+                      error={errors.stream}
+                    />
+                  </View>
+                </View>
+
+                <View className="flex-row justify-between">
+                  <View className="w-[48%]">
+                    <DateField
+                      label="Admission Date"
+                      value={formData.admissionDate}
+                      onChange={(date) => handleChange("admissionDate")(date)}
+                      error={errors.admissionDate}
+                      formatDate={formatDateToYYYYMMDD}
+                    />
+                  </View>
+                  <View className="w-[48%]">
+                    <InputField
+                      name="rollNumber"
+                      value={formData.rollNumber}
+                      onChangeText={handleChange("rollNumber")}
+                      placeholder="Enter roll number"
+                      labelName="Roll Number"
+                      error={errors.rollNumber}
+                      style={{ color: "black" }}
+                    />
+                  </View>
+                </View>
+
+                <View className="mt-2">
+                  <Text className="text-gray-700 mb-1">Scholarship Eligible</Text>
+                  <CustomToggle
+                    value={formData.scholarshipEligible}
+                    onToggle={() => handleToggle("scholarshipEligible")}
+                  />
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* Document Information Section */}
+          <View className="bg-white rounded-lg shadow-sm mb-4 p-4">
+            <SectionHeader
+              title="Document Information"
+              icon="assignment"
+              section="documentInfo"
+            />
+            
+            {expandedSections.documentInfo && (
+              <View className="mt-4">
+                <Text className="text-gray-700 font-medium mb-3">Required Documents</Text>
+                
+                <View className="flex-row justify-between items-center py-2 border-b border-gray-100">
+                  <Text className="text-gray-700">Birth Certificate</Text>
+                  <CustomToggle
+                    value={formData.birthCertificate}
+                    onToggle={() => handleToggle("birthCertificate")}
+                  />
+                </View>
+                
+                <View className="flex-row justify-between items-center py-2 border-b border-gray-100">
+                  <Text className="text-gray-700">Previous Marksheet</Text>
+                  <CustomToggle
+                    value={formData.previousMarksheet}
+                    onToggle={() => handleToggle("previousMarksheet")}
+                  />
+                </View>
+                
+                <View className="flex-row justify-between items-center py-2 border-b border-gray-100">
+                  <Text className="text-gray-700">Transfer Certificate</Text>
+                  <CustomToggle
+                    value={formData.transferCertificate}
+                    onToggle={() => handleToggle("transferCertificate")}
+                  />
+                </View>
+                
+                <View className="flex-row justify-between items-center py-2">
+                  <Text className="text-gray-700">Character Certificate</Text>
+                  <CustomToggle
+                    value={formData.characterCertificate}
+                    onToggle={() => handleToggle("characterCertificate")}
+                  />
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* Emergency Contact Section */}
+          <View className="bg-white rounded-lg shadow-sm mb-4 p-4">
+            <SectionHeader
+              title="Emergency Contact"
+              icon="emergency"
+              section="emergencyInfo"
+            />
+            
+            {expandedSections.emergencyInfo && (
+              <View className="mt-4">
+                <View className="flex-row justify-between">
+                  <View className="w-[48%]">
+                    <InputField
+                      name="guardianName"
+                      value={formData.guardianName}
+                      onChangeText={handleChange("guardianName")}
+                      placeholder="Enter guardian name"
+                      labelName="Guardian Name"
+                      error={errors.guardianName}
+                      style={{ color: "black" }}
+                    />
+                  </View>
+                  <View className="w-[48%]">
+                    <DropdownField
+                      name="guardianRelation"
+                      options={[
+                        { label: "Father", value: "father" },
+                        { label: "Mother", value: "mother" },
+                        { label: "Grandparent", value: "grandparent" },
+                        { label: "Sibling", value: "sibling" },
+                        { label: "Other", value: "other" },
+                      ]}
+                      value={formData.guardianRelation}
+                      onValueChange={(value) => handleChange("guardianRelation")(value)}
+                      placeholder="Select relation"
+                      labelName="Relation"
+                      error={errors.guardianRelation}
+                    />
+                  </View>
+                </View>
+
+                <View className="flex-row justify-between">
+                  <View className="w-[48%]">
+                    <InputField
+                      name="guardianContact"
+                      value={formData.guardianContact}
+                      onChangeText={handleChange("guardianContact")}
+                      placeholder="Enter contact number"
+                      labelName="Contact Number"
+                      keyboardType="phone-pad"
+                      error={errors.guardianContact}
+                      style={{ color: "black" }}
+                    />
+                  </View>
+                </View>
+
+                <InputField
+                  name="guardianAddress"
+                  value={formData.guardianAddress}
+                  onChangeText={handleChange("guardianAddress")}
+                  placeholder="Enter address (if different from student)"
+                  labelName="Address"
+                  multiline
+                  numberOfLines={2}
+                  error={errors.guardianAddress}
+                  style={{ color: "black", textAlignVertical: "top" }}
+                />
+              </View>
+            )}
+          </View>
+
+          {/* Additional Information Section */}
+          <View className="bg-white rounded-lg shadow-sm mb-4 p-4">
+            <SectionHeader
+              title="Additional Information"
+              icon="info"
+              section="additionalInfo"
+            />
+            
+            {expandedSections.additionalInfo && (
+              <View className="mt-4">
+                <InputField
+                  name="medicalConditions"
+                  value={formData.medicalConditions}
+                  onChangeText={handleChange("medicalConditions")}
+                  placeholder="Enter any medical conditions or allergies"
+                  labelName="Medical Conditions"
+                  multiline
+                  numberOfLines={2}
+                  error={errors.medicalConditions}
+                  style={{ color: "black", textAlignVertical: "top" }}
+                />
+
+                <View className="flex-row justify-between mt-2">
+                  <View className="w-[48%]">
+                    <Text className="text-gray-700 mb-1">Special Needs</Text>
+                    <CustomToggle
+                      value={formData.specialNeeds}
+                      onToggle={() => handleToggle("specialNeeds")}
+                    />
+                  </View>
+                  <View className="w-[48%]">
+                    <Text className="text-gray-700 mb-1">Transport Required</Text>
+                    <CustomToggle
+                      value={formData.transport}
+                      onToggle={() => handleToggle("transport")}
+                    />
+                  </View>
+                </View>
+
+                <View className="mt-2 mb-2">
+                  <Text className="text-gray-700 mb-1">Hostel Required</Text>
+                  <CustomToggle
+                    value={formData.hostel}
+                    onToggle={() => handleToggle("hostel")}
+                  />
+                </View>
+
+                <InputField
+                  name="remarks"
+                  value={formData.remarks}
+                  onChangeText={handleChange("remarks")}
+                  placeholder="Enter any additional remarks"
+                  labelName="Remarks"
+                  multiline
+                  numberOfLines={3}
+                  error={errors.remarks}
+                  style={{ color: "black", textAlignVertical: "top" }}
+                />
+              </View>
+            )}
+          </View>
+
+          {/* Information Panel */}
+          <View className="bg-blue-50 rounded-lg p-4 mb-4">
+            <View className="flex-row items-start">
+              <MaterialIcons name="info" size={20} color="#007bff" style={{ marginTop: 2 }} />
+              <View className="ml-2 flex-1">
+                <Text className="font-medium text-blue-800">Important Note</Text>
+                <Text className="text-blue-700 text-sm mt-1">
+                  Please ensure all information provided is accurate. Original documents must be verified at the time of admission. Incomplete forms may delay the admission process.
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Submit Button */}
+          <View className="mt-4 mb-8">
+            <MyButton
+              title="Submit Admission Form"
+              onPress={handleSubmit}
+            />
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
+
+export default EditTeacherScreen;
